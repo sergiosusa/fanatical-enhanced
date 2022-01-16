@@ -1,6 +1,6 @@
 # ✨ Fanatical Enhanced ✨
 
-This script enhanced the famous marketplace **[Fanatical](https://www.fanatical.com/)** adding:
+This script enhanced the famous marketplace **[Fanatical](https://www.fanatical.com?ref=sergiosusa1)** adding:
 
 * Add extra options in order page: 
   * Reveal keys with one click.
@@ -9,7 +9,7 @@ This script enhanced the famous marketplace **[Fanatical](https://www.fanatical.
 
 ### Supported sites
 
-- [Fanatical](https://www.fanatical.com/)
+- [Fanatical](https://www.fanatical.com?ref=sergiosusa1)
 
 ## 📌Prerequisites📎
 
