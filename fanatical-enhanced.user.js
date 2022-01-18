@@ -4,20 +4,20 @@
 // @version      0.1
 // @description  This script enhanced the famous marketplace fanatical with some extra features.
 // @author       Sergio Susa (sergio@sergiosusa.com)
-// @match        https://www.fanatical.com/en/orders/*
+// @match        https://www.fanatical.com/*/orders/*
+// @match        https://www.fanatical.com/*/bundle/*
+// @match        https://www.fanatical.com/*/pick-and-mix/*
 // @icon         https://www.google.com/s2/favicons?domain=fanatical.com
 // @grant        GM_setClipboard
 // @grant        unsafeWindow
 // @grant        GM_xmlhttpRequest
 // @require      https://cdnjs.cloudflare.com/ajax/libs/elasticlunr/0.9.6/elasticlunr.js
-// @require      https://raw.githubusercontent.com/sergiosusa/fanatical-enhanced/test-external-script/steam-api.js
+// @require      https://raw.githubusercontent.com/sergiosusa/steam-api-client-for-userscript/main/steam-api-client.js
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
     try {
-        let steamApi = new SteamApi();
-        steamApi.retrieveOwnedGames();
         let fanaticalEnhanced = new FanaticalEnhanced();
         fanaticalEnhanced.render();
     } catch (exception) {
@@ -28,12 +28,13 @@
 function FanaticalEnhanced() {
 
     this.rendererList = [
-        new OrderRevealer()
+        new OrderRevealer(),
+        new BundleChecker()
     ];
 
     this.render = () => {
         let renderer = this.findRenderer();
-        setTimeout( renderer.render,2000);
+        setTimeout(renderer.render, 2000);
     }
 
     this.findRenderer = () => {
@@ -46,7 +47,7 @@ function Renderer() {
     this.handlePage = "";
 
     this.canHandleCurrentPage = () => {
-        return document.location.href.includes(this.handlePage);
+        return null !== document.location.href.match(this.handlePage);
     };
 
     this.showAlert = (text) => {
@@ -54,9 +55,111 @@ function Renderer() {
     }
 }
 
+function BundleChecker() {
+    Renderer.call(this);
+
+    this.handlePage = /https:\/\/www\.fanatical\.com\/.*\/(bundle|pick-and-mix)\/.*/g;
+
+    this.steamApiClient = null;
+
+    this.own = [];
+    this.notOwn = [];
+
+    this.render = () => {
+        this.steamApiClient = new SteamApiClient();
+        this.steamApiClient.retrieveOwnedGames().then(
+            (gameIndex) => {
+                let gamesTitles = this.getGamesTitles();
+
+                this.compareGames(gamesTitles, gameIndex);
+
+                for (let x = 0; x < this.own.length; x++) {
+                    this.addResult(this.own[x].node, '#D88000', 'Own', this.own[x].url);
+                }
+
+                for (let y = 0; y < this.notOwn.length; y++) {
+                    this.addResult(this.notOwn[y].node, '#18a3ff', 'Not Own', this.notOwn[y].url);
+                }
+            }
+        );
+    }
+
+    this.compareGames = (games, myGames) => {
+
+        for (let x = 0; x < games.length; x++) {
+
+            let gameName = this.clearGameName(games[x].name);
+            let results = myGames.search(gameName);
+
+            let result = this.findExactMatch(results, gameName);
+
+            if (result) {
+                games[x].url = result.doc.url;
+                this.own.push(games[x]);
+            } else {
+                games[x].url = this.getSearchUrl(gameName);
+                this.notOwn.push(games[x]);
+            }
+        }
+    };
+
+    this.addResult = (item, color, text, link) => {
+
+        item.parentElement.parentElement.querySelector('.card-content').style.border = "solid " + color;
+        let responseDiv = document.createElement('div');
+
+        if (link != null) {
+            text = '<a onclick="window.open(\'' + link + '\');" style="cursor:pointer">' + text + '</a>';
+        }
+
+        responseDiv.innerHTML = '<span style="color:' + color + ';margin-left:0;font-weight: bold;background:none;display:inline;">(' + text + ')</span>';
+        item.parentElement.parentElement.querySelector('.card-icons-price-container').appendChild(responseDiv);
+    };
+
+    this.getGamesTitles = () => {
+
+        let games = [];
+        let cards = document.querySelectorAll('.card-overlay');
+
+        for (let x = 0; x < cards.length; x++) {
+            games.push(
+                {
+                    name: cards[x].innerText.replace('Product details', '').replace('Detalles del producto', '').replace('ADD', '').trim(),
+                    node: cards[x]
+                }
+            );
+        }
+        return games;
+    };
+
+    this.findExactMatch = (results, gameName) => {
+        for (let y = 0; y < results.length; y++) {
+            if (this.exactMatch(results[y].doc.name, gameName)) {
+                return results[y];
+            }
+        }
+        return null;
+    };
+
+    this.exactMatch = (resultGame, myGame) => {
+        return resultGame.toLowerCase() === myGame.toLowerCase();
+    };
+
+    this.clearGameName = (gameName) => {
+        return gameName.replace('Locked content', '').replace('Product details', '').replace('Detalles del producto').trim();
+    };
+
+    this.getSearchUrl = (gameName) => {
+        return 'https://store.steampowered.com/search/?term=' + gameName;
+    };
+
+}
+
+BundleChecker.prototype = Object.create(Renderer.prototype);
+
 function OrderRevealer() {
     Renderer.call(this);
-    this.handlePage = "https://www.fanatical.com/en/orders";
+    this.handlePage = /https:\/\/www\.fanatical\.com\/.*\/orders\/.*/g;
 
     this.render = () => {
         let referenceElement = document.querySelector('div.title-download-button-container');
