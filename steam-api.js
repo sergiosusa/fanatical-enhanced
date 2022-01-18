@@ -9,12 +9,15 @@ function SteamApi() {
         SEARCH: "https://store.steampowered.com/search/?term="
     }
 
-    this.steamUser = this.fillOrRetrieveVariable('steam-user');
-    this.steamApiId = this.fillOrRetrieveVariable('steam-api-id');
+    this.steamUser = null;
+    this.steamApiId = null;
 
     this.searchIndex = null;
 
     this.retrieveOwnedGames = () => {
+
+        this.steamUser = this.fillOrRetrieveVariable('steam-user');
+        this.steamApiId = this.fillOrRetrieveVariable('steam-api-id');
 
         this.initializeSearchIndex();
 

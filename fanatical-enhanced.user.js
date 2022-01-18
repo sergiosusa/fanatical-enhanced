@@ -8,11 +8,16 @@
 // @icon         https://www.google.com/s2/favicons?domain=fanatical.com
 // @grant        GM_setClipboard
 // @grant        unsafeWindow
+// @grant        GM_xmlhttpRequest
+// @require      https://cdnjs.cloudflare.com/ajax/libs/elasticlunr/0.9.6/elasticlunr.js
+// @require      https://raw.githubusercontent.com/sergiosusa/fanatical-enhanced/test-external-script/steam-api.js
 // ==/UserScript==
 
 (function() {
     'use strict';
     try {
+        let steamApi = new SteamApi();
+        steamApi.retrieveOwnedGames();
         let fanaticalEnhanced = new FanaticalEnhanced();
         fanaticalEnhanced.render();
     } catch (exception) {
