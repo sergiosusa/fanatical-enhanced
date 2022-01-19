@@ -69,17 +69,31 @@ function BundleChecker() {
         this.steamApiClient = new SteamApiClient();
         this.steamApiClient.retrieveOwnedGames().then(
             (gameIndex) => {
-                let gamesTitles = this.getGamesTitles();
+                this.getGamesTitles().then((gamesTitles) => {
+                    this.compareGames(gamesTitles, gameIndex);
 
-                this.compareGames(gamesTitles, gameIndex);
+                    let nodes = document.querySelectorAll("div.card-overlay");
 
-                for (let x = 0; x < this.own.length; x++) {
-                    this.addResult(this.own[x].node, '#D88000', 'Own', this.own[x].url);
-                }
-
-                for (let y = 0; y < this.notOwn.length; y++) {
-                    this.addResult(this.notOwn[y].node, '#18a3ff', 'Not Own', this.notOwn[y].url);
-                }
+                    for (let x = 0; x < this.own.length; x++) {
+                        let found = false;
+                        for(let y = 0; y < nodes.length && !found; y++) {
+                            if (nodes[y].querySelector("p").innerText === this.own[x].name){
+                                this.addResult(nodes[y], '#D88000', 'Own', this.own[x].url);
+                                found = true;
+                            }
+                        }
+                    }
+                    
+                    for (let x = 0; x < this.notOwn.length; x++) {
+                        let found = false;
+                        for(let y = 0; y < nodes.length && !found; y++) {
+                            if (nodes[y].querySelector("p").innerText === this.notOwn[x].name){
+                                this.addResult(nodes[y], '#18a3ff', 'Not Own', this.notOwn[x].url);
+                                found = true;
+                            }
+                        }
+                    }
+                });
             }
         );
     }
@@ -88,6 +102,15 @@ function BundleChecker() {
 
         for (let x = 0; x < games.length; x++) {
 
+            let game = myGames.documentStore.getDoc(games[x].id);
+            if (game){
+                this.own.push(game);
+            } else {
+                games[x].url = this.steamApiClient.generateGameUrl(games[x].id);
+                this.notOwn.push(games[x]);
+            }
+
+           /*
             let gameName = this.clearGameName(games[x].name);
             let results = myGames.search(gameName);
 
@@ -100,6 +123,8 @@ function BundleChecker() {
                 games[x].url = this.getSearchUrl(gameName);
                 this.notOwn.push(games[x]);
             }
+            */
+
         }
     };
 
@@ -118,7 +143,48 @@ function BundleChecker() {
 
     this.getGamesTitles = () => {
 
+
+        let apiUrl = window.location.href.replace(/\/\w{2}\/bundle\//g, "/api/products-group/").replace(/\/\w{2}\//g, "/api/");
+        let products = [];
         let games = [];
+
+        return new Promise(((resolve, reject) => {
+
+            GM_xmlhttpRequest({
+                method: "GET",
+                url: apiUrl,
+                onload: function (response) {
+
+                    let jsonResponse = JSON.parse(response.responseText);
+
+                    if (undefined !== jsonResponse.products) {
+                        products = jsonResponse.products;
+                    } else {
+                        let bundles = jsonResponse.bundles;
+                        for (let x = 0; x < bundles.length; x++) {
+                            products = products.concat(bundles[x].games);
+                        }
+                    }
+
+                    for (let x = 0; x < products.length; x++) {
+                        games.push({
+                            id: products[x].steam.id,
+                            name: products[x].name
+                        });
+                    }
+                    resolve(games);
+                }.bind(this)
+            });
+        }));
+
+        // https://www.fanatical.com/en/pick-and-mix/build-your-own-fantasy-bundle
+        // https://www.fanatical.com/api/pick-and-mix/build-your-own-fantasy-bundle/en
+
+        // https://www.fanatical.com/en/bundle/guardian-bundle-5
+        // https://www.fanatical.com/api/products-group/guardian-bundle-5/en
+
+
+        /*
         let cards = document.querySelectorAll('.card-overlay');
 
         for (let x = 0; x < cards.length; x++) {
@@ -130,6 +196,7 @@ function BundleChecker() {
             );
         }
         return games;
+        */
     };
 
     this.findExactMatch = (results, gameName) => {
