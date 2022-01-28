@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Fanatical Enhanced
 // @namespace    https://sergiosusa.com/
-// @version      0.1
+// @version      0.2
 // @description  This script enhanced the famous marketplace fanatical with some extra features.
 // @author       Sergio Susa (sergio@sergiosusa.com)
-// @match        https://www.fanatical.com/en/orders/*
+// @match        https://www.fanatical.com/*/orders/*
 // @icon         https://www.google.com/s2/favicons?domain=fanatical.com
 // @grant        GM_setClipboard
 // @grant        unsafeWindow
@@ -41,7 +41,7 @@ function Renderer() {
     this.handlePage = "";
 
     this.canHandleCurrentPage = () => {
-        return document.location.href.includes(this.handlePage);
+        return null !== document.location.href.match(this.handlePage);
     };
 
     this.showAlert = (text) => {
@@ -51,7 +51,7 @@ function Renderer() {
 
 function OrderRevealer() {
     Renderer.call(this);
-    this.handlePage = "https://www.fanatical.com/en/orders";
+    this.handlePage = /https:\/\/www\.fanatical\.com\/.*\/orders\/.*/g;
 
     this.render = () => {
         let referenceElement = document.querySelector('div.title-download-button-container');
