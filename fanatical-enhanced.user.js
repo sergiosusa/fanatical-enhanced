@@ -84,7 +84,7 @@ function OrderRevealer() {
         let result = [];
 
         document.querySelectorAll("div.order-item-details-container").forEach((gameElement) => {
-            let gameName = gameElement.querySelector("div.game-name").innerText;
+            let gameName = gameElement.querySelector(".game-name").innerText;
             let gameKey = gameElement.querySelector("input.key-input-field").value;
 
             result.push(gameName + "\t" + gameKey)
