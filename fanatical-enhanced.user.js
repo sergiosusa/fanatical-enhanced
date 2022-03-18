@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Fanatical Enhanced
 // @namespace    https://sergiosusa.com/
-// @version      0.2
+// @version      0.3
 // @description  This script enhanced the famous marketplace fanatical with some extra features.
 // @author       Sergio Susa (sergio@sergiosusa.com)
 // @match        https://www.fanatical.com/*/orders/*
